@@ -1,12 +1,17 @@
-package act:core@0.1.4;
+package act:core@0.1.5;
 
 interface types {
 
-  /// A localized string is a list of (language-tag, text) pairs.
-  /// Language tags follow BCP 47 (e.g. "en", "ru", "zh-Hans").
-  /// Every localized-string MUST include an entry for the component's default language
-  /// (declared in component-info.default-language).
-  type localized-string = list<tuple<string, string>>;
+  /// A localizable text value.
+  ///
+  /// - `plain` — a single string assumed to be in the component's `default-language`.
+  ///   Use this when localization is not needed.
+  /// - `localized` — a list of (BCP 47 language-tag, text) pairs.
+  ///   MUST include an entry for `component-info.default-language`.
+  variant localized-string {
+    plain(string),
+    localized(list<tuple<string, string>>),
+  }
 
   /// Key-value metadata. Keys are namespaced strings, values are CBOR-encoded.
   /// Components produce valid CBOR; the host canonicalizes to dCBOR if needed.
