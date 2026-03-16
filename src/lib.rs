@@ -211,7 +211,7 @@ mod component {
     use super::*;
 
     #[act_tool(description = "Make an HTTP request")]
-    async fn fetch(args: FetchArgs, ctx: &mut ActContext) -> ActResult<()> {
+    async fn fetch(#[args] args: FetchArgs, ctx: &mut ActContext) -> ActResult<()> {
         let mut method = to_wasi_method(&args.method);
         let mut current_uri: Uri = args
             .url
