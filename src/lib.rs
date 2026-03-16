@@ -1,8 +1,8 @@
 use act_sdk::cbor::to_cbor;
 use act_sdk::prelude::*;
 
-use http::header;
 use http::Uri;
+use http::header;
 use std::collections::HashMap;
 use wasip3::http::types::{ErrorCode, Fields, Method, Request, RequestOptions, Response, Scheme};
 
@@ -106,7 +106,11 @@ fn build_request(
     let scheme = match uri.scheme_str() {
         Some("https") => Scheme::Https,
         Some("http") => Scheme::Http,
-        Some(other) => return Err(ActError::invalid_args(format!("Unsupported scheme: {other}"))),
+        Some(other) => {
+            return Err(ActError::invalid_args(format!(
+                "Unsupported scheme: {other}"
+            )));
+        }
         None => return Err(ActError::invalid_args("Missing scheme")),
     };
 
@@ -166,7 +170,8 @@ fn status_headers_metadata(status: u16, headers: &http::HeaderMap) -> Vec<(Strin
 /// Resolve a redirect Location against the current URI.
 fn resolve_redirect(base: &Uri, location: &str) -> ActResult<Uri> {
     let parse = |s: &str| -> ActResult<Uri> {
-        s.parse().map_err(|e| ActError::internal(format!("Invalid redirect URL: {e}")))
+        s.parse()
+            .map_err(|e| ActError::internal(format!("Invalid redirect URL: {e}")))
     };
 
     // Absolute URI
@@ -190,15 +195,17 @@ fn resolve_redirect(base: &Uri, location: &str) -> ActResult<Uri> {
     };
 
     let mut parts = base.clone().into_parts();
-    parts.path_and_query = Some(path.parse()
-        .map_err(|e| ActError::internal(format!("Invalid redirect path: {e}")))?);
+    parts.path_and_query = Some(
+        path.parse()
+            .map_err(|e| ActError::internal(format!("Invalid redirect path: {e}")))?,
+    );
     Uri::from_parts(parts).map_err(|e| ActError::internal(format!("Invalid redirect URL: {e}")))
 }
 
 #[act_component(
     name = "http-client",
     version = "0.1.0",
-    description = "HTTP client ACT component",
+    description = "HTTP client ACT component"
 )]
 mod component {
     use super::*;
@@ -206,7 +213,9 @@ mod component {
     #[act_tool(description = "Make an HTTP request")]
     async fn fetch(args: FetchArgs, ctx: &mut ActContext) -> ActResult<()> {
         let mut method = to_wasi_method(&args.method);
-        let mut current_uri: Uri = args.url.parse()
+        let mut current_uri: Uri = args
+            .url
+            .parse()
             .map_err(|e| ActError::invalid_args(format!("Invalid URL: {e}")))?;
         let mut redirects = 0u8;
 
@@ -216,7 +225,12 @@ mod component {
                 .iter()
                 .map(|(k, v)| (k.clone(), v.as_bytes().to_vec()))
                 .collect();
-            if args.body.as_ref().is_some_and(|b| b.is_json()) && !args.headers.keys().any(|k| k.eq_ignore_ascii_case(header::CONTENT_TYPE.as_str())) {
+            if args.body.as_ref().is_some_and(|b| b.is_json())
+                && !args
+                    .headers
+                    .keys()
+                    .any(|k| k.eq_ignore_ascii_case(header::CONTENT_TYPE.as_str()))
+            {
                 header_list.push((
                     header::CONTENT_TYPE.as_str().to_string(),
                     b"application/json".to_vec(),
@@ -248,7 +262,8 @@ mod component {
                 }
                 let resp_headers = fields_to_header_map(&resp.get_headers());
                 if let Some(location) = resp_headers.get(header::LOCATION) {
-                    let location_str = location.to_str()
+                    let location_str = location
+                        .to_str()
                         .map_err(|e| ActError::internal(format!("Invalid Location header: {e}")))?;
                     current_uri = resolve_redirect(&current_uri, location_str)?;
                     if status == http::StatusCode::SEE_OTHER {
@@ -263,10 +278,11 @@ mod component {
 
         let status = response.get_status_code();
         let resp_headers = fields_to_header_map(&response.get_headers());
-        let content_type = resp_headers.get(header::CONTENT_TYPE).map(|v| v.to_str().unwrap_or("").to_string());
+        let content_type = resp_headers
+            .get(header::CONTENT_TYPE)
+            .map(|v| v.to_str().unwrap_or("").to_string());
 
-        let (_, result_reader) =
-            wasip3::wit_future::new::<Result<(), ErrorCode>>(|| Ok(()));
+        let (_, result_reader) = wasip3::wit_future::new::<Result<(), ErrorCode>>(|| Ok(()));
 
         let (mut body_stream, trailers_future) = Response::consume_body(response, result_reader);
 
@@ -291,12 +307,19 @@ mod component {
         }
 
         if first_chunk {
-            ctx.send_content(vec![], content_type.clone(), status_headers_metadata(status, &resp_headers));
+            ctx.send_content(
+                vec![],
+                content_type.clone(),
+                status_headers_metadata(status, &resp_headers),
+            );
         }
 
         if let Ok(Some(trailers)) = trailers_future.await {
             let trailers = fields_to_header_map(&trailers);
-            let metadata = vec![(META_HTTP_TRAILERS.to_string(), header_map_to_cbor(&trailers))];
+            let metadata = vec![(
+                META_HTTP_TRAILERS.to_string(),
+                header_map_to_cbor(&trailers),
+            )];
             ctx.send_content(vec![], None, metadata);
         }
 
