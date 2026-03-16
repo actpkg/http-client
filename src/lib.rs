@@ -282,7 +282,7 @@ mod component {
                     } else {
                         vec![]
                     };
-                    ctx.send_content(chunk, content_type.clone(), metadata).await?;
+                    ctx.send_content(chunk, content_type.clone(), metadata);
                     read_buf = Vec::with_capacity(16384);
                 }
                 wasip3::wit_bindgen::StreamResult::Dropped
@@ -291,13 +291,13 @@ mod component {
         }
 
         if first_chunk {
-            ctx.send_content(vec![], content_type.clone(), status_headers_metadata(status, &resp_headers)).await?;
+            ctx.send_content(vec![], content_type.clone(), status_headers_metadata(status, &resp_headers));
         }
 
         if let Ok(Some(trailers)) = trailers_future.await {
             let trailers = fields_to_header_map(&trailers);
             let metadata = vec![(META_HTTP_TRAILERS.to_string(), header_map_to_cbor(&trailers))];
-            ctx.send_content(vec![], None, metadata).await?;
+            ctx.send_content(vec![], None, metadata);
         }
 
         Ok(())

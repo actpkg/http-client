@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: wasm32-wasip2
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --target wasm32-wasip2 --release
+      - uses: actions/upload-artifact@v7
+        with:
+          name: component.wasm
+          path: target/wasm32-wasip2/release/*.wasm
+
+  e2e:
+    name: E2E Test
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: component.wasm
+          path: target/wasm32-wasip2/release/
+      - uses: actcore/act-cli/setup@main
+      - uses: taiki-e/cache-cargo-install-action@v3
+        with:
+          tool: hurl
+      - name: Run e2e tests
+        run: |
+          act serve target/wasm32-wasip2/release/*.wasm --listen "[::1]:3456" &
+          npx wait-on http://[::1]:3456/info
+          hurl --test --variable "port=3456" e2e/*.hurl
+          kill $!
+
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo fmt -- --check
