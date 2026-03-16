@@ -1,4 +1,4 @@
-GET http://[::1]:{{port}}/info
+GET {{baseurl}}/info
 HTTP 200
 [Asserts]
 jsonpath "$['std:name']" == "http-client"

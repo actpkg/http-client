@@ -20,8 +20,8 @@ jobs:
         with:
           targets: wasm32-wasip2
       - uses: Swatinem/rust-cache@v2
-      - name: Build
-        run: cargo build --target wasm32-wasip2 --release
+      - uses: taiki-e/install-action@just
+      - run: just build
       - uses: actions/upload-artifact@v7
         with:
           name: component.wasm
@@ -38,15 +38,11 @@ jobs:
           name: component.wasm
           path: target/wasm32-wasip2/release/
       - uses: actcore/act-cli/setup@main
+      - uses: taiki-e/install-action@just
       - uses: taiki-e/cache-cargo-install-action@v3
         with:
           tool: hurl
-      - name: Run e2e tests
-        run: |
-          act serve target/wasm32-wasip2/release/*.wasm --listen "[::1]:3456" &
-          npx wait-on http://[::1]:3456/info
-          hurl --test --variable "port=3456" e2e/*.hurl
-          kill $!
+      - run: just test
 
   fmt:
     name: Format

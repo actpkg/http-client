@@ -2,6 +2,7 @@ wasm := "target/wasm32-wasip2/release/http_client.wasm"
 act := env("ACT", "act")
 port := "3456"
 addr := "[::1]:" + port
+baseurl := "http://" + addr
 
 build:
     cargo build --target wasm32-wasip2 --release
@@ -10,5 +11,5 @@ test: build
     #!/usr/bin/env bash
     {{act}} serve {{wasm}} --listen "{{addr}}" &
     trap "kill $!" EXIT
-    npx wait-on http://[::1]:{{port}}/info
-    hurl --test --variable "port={{port}}" e2e/*.hurl
+    npx wait-on {{baseurl}}/info
+    hurl --test --variable "baseurl={{baseurl}}" e2e/*.hurl
