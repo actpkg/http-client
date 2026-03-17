@@ -13,7 +13,7 @@ setup: init
 build:
     cargo build --target wasm32-wasip2 --release
 
-test: build
+test:
     #!/usr/bin/env bash
     {{act}} serve {{wasm}} --listen "{{addr}}" &
     trap "kill $!" EXIT
