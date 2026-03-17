@@ -46,6 +46,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: just test
 
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: moonrepo/setup-rust@v1
+        with:
+          channel: nightly
+          targets: wasm32-wasip2
+          components: clippy
+          bins: wit-deps-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: wit-deps
+      - run: cargo clippy --target wasm32-wasip2 -- -D warnings
+
   fmt:
     name: Format
     runs-on: ubuntu-latest
