@@ -11,7 +11,7 @@ setup: init
     prek install
 
 build:
-    cargo build --target wasm32-wasip2 --release
+    cargo build --release
 
 test:
     #!/usr/bin/env bash
