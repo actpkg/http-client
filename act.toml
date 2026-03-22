@@ -1,0 +1,5 @@
+name = "http-client"
+version = "0.1.0"
+description = "HTTP client ACT component"
+
+[capabilities."wasi:http"]

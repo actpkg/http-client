@@ -15,7 +15,7 @@ build:
 
 test:
     #!/usr/bin/env bash
-    {{act}} serve {{wasm}} --listen "{{addr}}" &
+    {{act}} run {{wasm}} --listen "{{addr}}" &
     trap "kill $!" EXIT
     npx wait-on {{baseurl}}/info
     hurl --test --variable "baseurl={{baseurl}}" e2e/*.hurl

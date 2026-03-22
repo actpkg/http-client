@@ -80,11 +80,7 @@ fn status_headers_metadata(status: u16, headers: &http::HeaderMap) -> Vec<(Strin
     ]
 }
 
-#[act_component(
-    name = "http-client",
-    version = "0.1.0",
-    description = "HTTP client ACT component"
-)]
+#[act_component]
 mod component {
     use super::*;
 
