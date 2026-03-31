@@ -3,6 +3,8 @@ use act_sdk::prelude::*;
 
 use std::collections::HashMap;
 
+act_sdk::embed_skill!("skill/");
+
 // Component-specific metadata keys
 const META_HTTP_STATUS: &str = "http-client:status";
 const META_HTTP_HEADERS: &str = "http-client:headers";
