@@ -1,6 +1,6 @@
-_commit: 36741aa
+_commit: ad08b78
 _src_path: https://github.com/actcore/act-component-template
 description: HTTP client ACT component
-project_name: http-client
-needs_http: true
 needs_filesystem: false
+needs_http: true
+project_name: http-client

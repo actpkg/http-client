@@ -1,18 +1,24 @@
 [package]
-name = "http-client"
+name = "component-http-client"
+description = "HTTP client ACT component"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-act-sdk = "0.2.7"
+act-sdk = "0.2"
 wit-bindgen = { version = "0.54", features = ["async-spawn"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = "3"
-schemars = "1"
 serde_json = "1"
 http = "1"
 http-serde = "2"
 wasi-fetch = "0.1"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+opt-level = "z"
 
 [lib]
 crate-type = ["cdylib"]
