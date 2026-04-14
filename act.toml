@@ -1,3 +1,4 @@
 [std]
+name = "http-client"
 
 [std.capabilities."wasi:http"]
