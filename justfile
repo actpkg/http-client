@@ -1,6 +1,7 @@
 wasm := "target/wasm32-wasip2/release/component_http_client.wasm"
 
 act := env("ACT", "npx @actcore/act")
+hurl := env("HURL", "npx @orangeopensource/hurl")
 oras := env("ORAS", "oras")
 registry := env("OCI_REGISTRY", "ghcr.io/actpkg")
 port := `npx get-port-cli`
@@ -22,7 +23,7 @@ test:
     {{act}} run {{wasm}} --http --listen "{{addr}}" &
     trap "kill $!" EXIT
     npx wait-on -t 180s {{baseurl}}/info
-    npx @orangeopensource/hurl --test --variable "baseurl={{baseurl}}" e2e/*.hurl
+    {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
 
 publish:
     #!/usr/bin/env bash
