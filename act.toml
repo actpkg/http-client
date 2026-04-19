@@ -2,3 +2,7 @@
 name = "http-client"
 
 [std.capabilities."wasi:http"]
+description = "Forwards HTTP requests from guest tool args to the network. Host scope is delegated to the host policy."
+
+[[std.capabilities."wasi:http".allow]]
+host = "*"
