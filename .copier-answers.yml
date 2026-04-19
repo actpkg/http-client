@@ -1,5 +1,5 @@
 _commit: ad08b78
-_src_path: https://github.com/actcore/act-component-template
+_src_path: https://github.com/actcore/act-template-rust
 description: HTTP client ACT component
 needs_filesystem: false
 needs_http: true
