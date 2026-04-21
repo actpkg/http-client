@@ -20,7 +20,7 @@ build:
 test:
     #!/usr/bin/env bash
     set -euo pipefail
-    {{act}} run {{wasm}} --http --listen "{{addr}}" &
+    {{act}} run {{wasm}} --http --listen "{{addr}}" --http-policy open &
     trap "kill $!" EXIT
     npx wait-on -t 180s {{baseurl}}/info
     {{hurl}} --test --variable "baseurl={{baseurl}}" e2e/*.hurl
