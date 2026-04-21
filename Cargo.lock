@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "act-sdk"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fd37d29e43a923c0fe69ff1311011ed6761ba8fa493f11cb8a73edbb616f783"
+checksum = "6cba6f0bcf33982f4a32f8130e9e3b939d11d2fa9de34be9bf40fa45269acd37"
 dependencies = [
  "act-sdk-macros",
  "act-types",
@@ -19,9 +19,9 @@ dependencies = [
 
 [[package]]
 name = "act-sdk-macros"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dd22fe42807f6ab2cc5ea8d6a5849341d156c2513c6772735c808f3b1a4d1cb"
+checksum = "53ad53846ae59394d9398f49979c28bee4225330687f4275d85396552b96d39e"
 dependencies = [
  "act-types",
  "ciborium",
@@ -36,9 +36,9 @@ dependencies = [
 
 [[package]]
 name = "act-types"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62e9cc180d148c385c5c7f85aa5b349a6406faf8c67dc8a556d9a6cccab66826"
+checksum = "8061ce793866b6430317d2f06f9be9a0db3d08127ad398f133bbd0537824e5ca"
 dependencies = [
  "base64",
  "ciborium",
