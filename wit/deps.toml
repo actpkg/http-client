@@ -1,1 +1,2 @@
 act-core = "https://github.com/actcore/act-spec/archive/main.tar.gz"
+act-tools = "https://github.com/actcore/act-spec/archive/main.tar.gz"

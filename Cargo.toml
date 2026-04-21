@@ -1,11 +1,11 @@
 [package]
 name = "component-http-client"
 description = "HTTP client ACT component"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2024"
 
 [dependencies]
-act-sdk = "0.5"
+act-sdk = "0.6"
 wit-bindgen = { version = "0.57", features = ["async-spawn"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = "3"
