@@ -70,9 +70,8 @@ jobs:
     needs: [e2e, clippy, fmt]
     runs-on: ubuntu-latest
     permissions:
-      packages: write
-      id-token: write
-      attestations: write
+      contents: read      # checkout
+      id-token: write     # keyless cosign signing via GitHub OIDC
     steps:
       - uses: actions/checkout@v6
       - uses: actions/download-artifact@v8
@@ -80,15 +79,20 @@ jobs:
           name: component.wasm
           path: target/wasm32-wasip2/release/
       - uses: taiki-e/install-action@just
+      - uses: sigstore/cosign-installer@v4.1.2   # defaults to cosign 3.x → OCI 1.1 referrer signatures
       - name: Publish
         id: publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # actpkg.dev PAT (any username; the registry detects the PAT by prefix).
+          # Create one at actpkg.dev and add it as the ACTPKG_TOKEN repo secret.
+          OCI_USERNAME: __token__
+          OCI_PASSWORD: ${{ secrets.ACTPKG_TOKEN }}
         run: just publish
-      - name: Attest
+      - name: Sign (keyless via GitHub OIDC)
         if: steps.publish.outputs.digest != ''
-        uses: actions/attest@v4
-        with:
-          subject-name: ${{ steps.publish.outputs.image }}
-          subject-digest: ${{ steps.publish.outputs.digest }}
-          push-to-registry: true
+        env:
+          ACTPKG_TOKEN: ${{ secrets.ACTPKG_TOKEN }}
+          SUBJECT: ${{ steps.publish.outputs.image }}@${{ steps.publish.outputs.digest }}
+        run: |
+          echo "$ACTPKG_TOKEN" | cosign login actpkg.dev -u __token__ --password-stdin
+          cosign sign --yes "$SUBJECT"
