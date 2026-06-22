@@ -5,7 +5,7 @@ version = "0.2.1"
 edition = "2024"
 
 [dependencies]
-act-sdk = "0.9"
+act-sdk = "0.11"
 wit-bindgen = { version = "0.58", features = ["async-spawn"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = "3"
@@ -19,6 +19,7 @@ lto = "fat"
 codegen-units = 1
 strip = true
 opt-level = "z"
+panic = "abort"
 
 [lib]
 crate-type = ["cdylib"]
