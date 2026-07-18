@@ -1,12 +1,11 @@
 [package]
 name = "component-http-client"
 description = "HTTP client ACT component"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 
 [dependencies]
-act-sdk = "0.12"
-wit-bindgen = { version = "0.58", features = ["async-spawn"] }
+act-sdk = "0.14"
 serde = { version = "1", features = ["derive"] }
 serde_with = "3"
 serde_json = "1"
