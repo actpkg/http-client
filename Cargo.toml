@@ -5,7 +5,7 @@ version = "0.2.3"
 edition = "2024"
 
 [dependencies]
-act-sdk = "0.12"
+act-sdk = "0.13"
 wit-bindgen = { version = "0.58", features = ["async-spawn"] }
 serde = { version = "1", features = ["derive"] }
 serde_with = "3"
