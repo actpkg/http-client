@@ -1,4 +1,5 @@
 /target
+/e2e/target/
 /wit/deps/
 __pycache__/
 .pytest_cache/
