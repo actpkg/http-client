@@ -2,6 +2,7 @@ use act_sdk::cbor::to_cbor;
 use act_sdk::prelude::*;
 
 use std::collections::HashMap;
+use std::time::Duration;
 
 // Component-specific metadata keys
 const META_HTTP_STATUS: &str = "http-client:status";
@@ -80,17 +81,50 @@ fn status_headers_metadata(status: u16, headers: &http::HeaderMap) -> Vec<(Strin
     ]
 }
 
+/// A URL that cannot serve as a request target — a parse failure, a
+/// scheme-less relative form — is the caller's argument being wrong, not
+/// a transport failure: `std:invalid-args`. hclient 0.1.0-alpha.18 files
+/// exactly that class under `ErrorKind::Uri` (before that kind existed
+/// this went through `source()`-downcasting of `UriError`, and before
+/// that through `wasi_fetch::Error::Url`, which a pre-send
+/// `http::Uri::try_from` check used to imitate — that check also blocked
+/// IDN hosts, which `idn` punycodes, so it is gone). One drift against
+/// the wasi-fetch behaviour stays: a *resolution* failure (bad host)
+/// lands in `invalid_args` too, because hclient folds resolve errors
+/// into the same kind.
+fn classify_send_error(e: hclient::Error) -> ActError {
+    if matches!(e.kind(), hclient::ErrorKind::Uri) {
+        ActError::invalid_args(e.to_string())
+    } else {
+        ActError::internal(format!("HTTP error: {e}"))
+    }
+}
+
 #[act_component]
 mod component {
     use super::*;
 
     #[act_tool(description = "Make an HTTP request")]
     async fn fetch(#[args] args: FetchArgs, ctx: &mut ActContext) -> ActResult<()> {
-        let redirect_limit = if args.follow_redirects { 10 } else { 0 };
+        let client = hclient::Client::builder(hclient_wasi::WasiHttp::new())
+            .build()
+            .map_err(|e| ActError::internal(format!("Cannot build HTTP client: {e}")))?;
 
-        let mut builder = wasi_fetch::Client::new()
-            .request(args.method.clone(), &args.url)
-            .redirect_limit(redirect_limit);
+        // Redirects: follow up to 10 hops — `Limit`'s default, and the
+        // limit wasi-fetch was asked for here — or, with
+        // `follow_redirects = false`, hand the 3xx response back to the
+        // caller. That is `Forbid`, not `Limit::new(0)`: the latter turns
+        // the first redirect into an *error*, the former is "here is the
+        // redirect response", which is what wasi-fetch's
+        // `redirect_limit(0)` did. Two branches, not one `if` over the
+        // policy value: `Limit` and `Forbid` are distinct concrete types
+        // and `.redirect()` takes one `P: RedirectPolicy`.
+        let mut builder = client.request(args.method.clone(), &args.url);
+        builder = if args.follow_redirects {
+            builder.redirect(hclient::redirect::Limit::default())
+        } else {
+            builder.redirect(hclient::redirect::Forbid)
+        };
 
         // Set headers
         for (k, v) in &args.headers {
@@ -108,18 +142,28 @@ mod component {
             {
                 builder = builder.header("content-type", "application/json");
             }
-            builder = builder.body(body.into_bytes());
+            builder = builder.body(hclient::RequestBody::Full(bytes::Bytes::from(
+                body.into_bytes(),
+            )));
         }
 
-        // Set timeout
+        // Set timeout. `wasi_fetch::RequestBuilder::timeout` put one
+        // `Duration` into the wasip3 `connect` and `first_byte` options
+        // together; `hclient::Timeouts` keeps them as two fields, so both
+        // get the same value here or the connect timeout would be
+        // silently dropped. `Timeouts` is `#[non_exhaustive]` — start
+        // from the default and set what we mean.
         if let Some(ms) = args.timeout_ms {
-            builder = builder.timeout(std::time::Duration::from_millis(ms));
+            let d = Duration::from_millis(ms);
+            builder = builder.timeouts({
+                let mut timeouts = hclient::Timeouts::default();
+                timeouts.connect = Some(d);
+                timeouts.first_byte = Some(d);
+                timeouts
+            });
         }
 
-        let response = builder.send().await.map_err(|e| match e {
-            wasi_fetch::Error::Url(msg) => ActError::invalid_args(msg),
-            other => ActError::internal(format!("HTTP error: {other}")),
-        })?;
+        let mut response = builder.send().await.map_err(classify_send_error)?;
 
         let status = response.status().as_u16();
         let resp_headers = response.headers().clone();
@@ -128,11 +172,12 @@ mod component {
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string());
 
-        // Stream response body chunks
-        let mut body = response.into_body();
+        // Stream response body chunks — read straight off the response,
+        // no `into_body` step like wasi-fetch needed.
         let mut first_chunk = true;
 
-        while let Some(chunk) = body.chunk().await {
+        while let Some(chunk) = response.chunk().await {
+            let chunk = chunk.map_err(|e| ActError::internal(format!("HTTP error: {e}")))?;
             let metadata = if first_chunk {
                 first_chunk = false;
                 status_headers_metadata(status, &resp_headers)
